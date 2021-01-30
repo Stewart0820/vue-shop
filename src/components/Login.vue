@@ -25,8 +25,10 @@
         </el-form-item>
         <!-- 按钮 -->
         <el-form-item class="btns">
-          <el-button type="primary">登录</el-button>
-          <el-button type="info" @click="resetLoginForm">重置</el-button>
+          <el-button type="primary"
+                     @click="login">登录</el-button>
+          <el-button type="info"
+                     @click="resetLoginForm">重置</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -40,27 +42,51 @@ export default {
       // 登录数据
       loginForm: {
         username: 'admin',
-        password: 'admin',
+        password: '123456',
       },
       // 表单验证规则
       loginFormReles: {
         username: [
           { required: true, message: '请输入登录名称', trigger: 'blur' },
-          { min: 3, max: 10, message: '长度在 3 到 10 个字符', trigger: 'blur' },
+          {
+            min: 3,
+            max: 10,
+            message: '长度在 3 到 10 个字符',
+            trigger: 'blur',
+          },
         ],
         password: [
           { required: true, message: '请输入登录密码', trigger: 'blur' },
-          { min: 5, max: 15, message: '长度在 5 到 15 个字符', trigger: 'blur' },
+          {
+            min: 5,
+            max: 15,
+            message: '长度在 5 到 15 个字符',
+            trigger: 'blur',
+          },
         ],
       },
     }
   },
-  methods:{
+  methods: {
     // 点击重置登录表单
-    resetLoginForm(){
+    resetLoginForm() {
       this.$refs.loginFormRef.resetFields()
-    }
-  }
+    },
+    login() {
+      // 表单登录前的预验证
+      this.$refs.loginFormRef.validate(async (valid) => {
+        if (!valid) {
+          return
+        }
+        const { data: res } = await this.$http.post('login', this.loginForm)
+        if (res.meta.status !== 200) return this.$message.error('登录失败')
+        this.$message.success('登录成功')
+        // 把token保存到sessionStorage中
+        window.sessionStorage.setItem('token', res.data.token)
+        this.$router.push('/home')
+      })
+    },
+  },
 }
 </script>
 
