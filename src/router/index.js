@@ -4,6 +4,8 @@ import Login from "../components/Login.vue";
 import Home from "../components/Home.vue";
 import Welcome from "../components/Welcome.vue";
 import Users from "../components/user/Users.vue";
+import Right from "../components/power/Right.vue";
+import Role from "../components/power/Role.vue";
 // 导入全局样式
 import "../assets/css/global.css";
 
@@ -19,7 +21,9 @@ const router = new VueRouter({
       redirect: "/welcome",
       children: [
         { path: "/welcome", component: Welcome },
-        { path: "/users", component: Users }
+        { path: "/users", component: Users },
+        { path: "/rights", component: Right },
+        { path: "/roles", component: Role },
       ]
     }
   ]

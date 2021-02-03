@@ -57,11 +57,13 @@
             <!-- 修改按钮 -->
             <el-button type="primary"
                        icon="el-icon-edit"
-                       size="mini"></el-button>
+                       size="mini"
+                       @click="showEditDialog(scope.row.id)"></el-button>
             <!-- 删除按钮 -->
             <el-button type="danger"
                        icon="el-icon-delete"
-                       size="mini"></el-button>
+                       size="mini"
+                       @click="removeUserById(scope.row.id)"></el-button>
             <!-- 分配角色按钮 -->
             <el-tooltip effect="dark"
                         content="分配角色"
@@ -119,6 +121,36 @@
                    @click="addUser">确 定</el-button>
       </span>
     </el-dialog>
+    <!-- 修改用户 -->
+    <el-dialog title="修改用户"
+               :visible.sync="editDialogVisible"
+               width="50%"
+               @close="editDialogClosed">
+      <!-- 内容主体区域 -->
+      <el-form :model="editUserForm"
+               :rules="editUserFormRules"
+               ref="editUserFormRef">
+        <el-form-item label="用户名">
+          <el-input v-model="editUserForm.username"
+                    disabled></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱"
+                      prop="email">
+          <el-input v-model="editUserForm.email"></el-input>
+        </el-form-item>
+        <el-form-item label="手机号"
+                      prop="mobile">
+          <el-input v-model="editUserForm.mobile"></el-input>
+        </el-form-item>
+      </el-form>
+      <!-- 底部区域 -->
+      <span slot="footer"
+            class="dialog-footer">
+        <el-button @click="editDialogVisible = false">取 消</el-button>
+        <el-button type="primary"
+                   @click="editUserInfo">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 <script >
@@ -154,6 +186,7 @@ export default {
       total: 0,
       // 控制对话框的显示和隐藏
       addDialogVisible: false,
+      editDialogVisible: false,
       // 添加用户的表单数据
       addUserForm: {
         username: '',
@@ -161,6 +194,7 @@ export default {
         email: '',
         mobile: '',
       },
+      editUserForm: {},
       addUserFormRules: {
         username: [
           { required: true, message: '请输入用户名', trigger: 'blur' },
@@ -180,6 +214,16 @@ export default {
             trigger: 'blur',
           },
         ],
+        email: [
+          { required: true, message: '请输入邮箱', trigger: 'blur' },
+          { validator: checkEmail, trigger: 'blur' },
+        ],
+        mobile: [
+          { required: true, message: '请输入手机号码', trigger: 'blur' },
+          { validator: checkMobile, trigger: 'blur' },
+        ],
+      },
+      editUserFormRules: {
         email: [
           { required: true, message: '请输入邮箱', trigger: 'blur' },
           { validator: checkEmail, trigger: 'blur' },
@@ -246,6 +290,65 @@ export default {
         this.addDialogVisible = false
         this.getUserList()
       })
+    },
+    // 展示编辑用户
+    async showEditDialog(id) {
+      const { data: res } = await this.$http.get('users/' + id)
+
+      if (res.meta.status !== 200) {
+        return this.$message.error('查询用户失败')
+      }
+
+      this.editUserForm = res.data
+
+      this.editDialogVisible = true
+    },
+    // 监听修改对话框的关闭事件
+    editDialogClosed() {
+      this.$refs.editUserFormRef.resetFields()
+    },
+    // 修改的校验
+    editUserInfo() {
+      this.$refs.editUserFormRef.validate(async (valid) => {
+        if (!valid) return
+        const { data: res } = await this.$http.put(
+          'users/' + this.editUserForm.id,
+          {
+            email: this.editUserForm.email,
+            mobile: this.editUserForm.mobile,
+          }
+        )
+        if (res.meta.status != 200) {
+          return this.$message.error('更新用户信息失败')
+        }
+        this.editDialogVisible = false
+        this.getUserList()
+        this.$message.success('更新用户信息成功')
+      })
+    },
+    // 更据id删除
+    async removeUserById(id) {
+      // 弹框询问用户是否删除
+      const confirmResult = await this.$confirm(
+        '此操作将永久删除该用户, 是否继续?',
+        '提示',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning',
+        }
+      ).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消删除',
+        })
+      })
+      const { data: res } = await this.$http.delete('users/' + id)
+      if(res.meta.status!==200){
+        return this.$message.error('删除用户失败')
+      }
+      this.$message.success('删除用户成功')
+      this.getUserList()
     },
   },
 }
